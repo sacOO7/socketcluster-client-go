@@ -2,6 +2,7 @@ package main
 import (
 	"fmt"
 	"github.com/rgamba/evtwebsocket"
+    "encoding/json"
 )
 
 func PrintMe(message string) {
@@ -20,9 +21,19 @@ func Equal(s string, b []byte) bool {
     return true
 }
 
-func CreateMessage(message string) evtwebsocket.Msg{
+func CreateMessageFromString(message string) evtwebsocket.Msg{
 	return evtwebsocket.Msg{
     Body: []byte(message),
 	}
 }
 
+func CreateMessageFromByte(message [] byte) evtwebsocket.Msg{
+    return evtwebsocket.Msg{
+    Body: message,
+    }
+}
+
+func SerializeData(data interface {}) [] byte {
+    b, _ := json.Marshal(data)
+    return b;
+}

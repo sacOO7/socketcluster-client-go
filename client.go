@@ -6,20 +6,23 @@ import (
 	"log"
 	_ "time"
 	"os"
+	"./models"
 )
 
 func handle_connection() {
 		conn := evtwebsocket.Conn{
 	    // Fires when the connection is established
 	    OnConnected: func(w *evtwebsocket.Conn) {
-	        fmt.Println("Connected!")   
+	        fmt.Println("Connected!")
+	        handshake := SerializeData(models.GetHandshakeObject())
+	        w.Send(CreateMessageFromByte(handshake));
 	    },
 	    // Fires when a new message arrives from the server
 	    OnMessage: func(msg []byte, w *evtwebsocket.Conn) {
 	        fmt.Printf("New message: %s\n", msg)  
 	        if Equal("#1", msg) {
 	        	fmt.Println("Got ping message ")
-	        	w.Send(CreateMessage("#2"));
+	        	w.Send(CreateMessageFromString("#2"));
 	        } 
 	    },
 	    // Fires when an error occurs and connection is closed
