@@ -1,4 +1,4 @@
-package main
+package utils
 import (
 	"fmt"
 	"github.com/rgamba/evtwebsocket"
@@ -9,7 +9,7 @@ func PrintMe(message string) {
 	fmt.Println(message)
 }
 
-func Equal(s string, b []byte) bool {
+func IsEqual(s string, b []byte) bool {
     if len(s) != len(b) {
         return false
     }

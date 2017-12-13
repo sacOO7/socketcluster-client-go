@@ -7,6 +7,7 @@ import (
 	_ "time"
 	"os"
 	"./models"
+	"./utils"
 )
 
 func handle_connection() {
@@ -14,15 +15,15 @@ func handle_connection() {
 	    // Fires when the connection is established
 	    OnConnected: func(w *evtwebsocket.Conn) {
 	        fmt.Println("Connected!")
-	        handshake := SerializeData(models.GetHandshakeObject(nil, 1))
-	        w.Send(CreateMessageFromByte(handshake));
+	        handshake := utils.SerializeData(models.GetHandshakeObject(nil, 1))
+	        w.Send(utils.CreateMessageFromByte(handshake));
 	    },
 	    // Fires when a new message arrives from the server
 	    OnMessage: func(msg []byte, w *evtwebsocket.Conn) {
 	        fmt.Printf("New message: %s\n", msg)  
-	        if Equal("#1", msg) {
+	        if utils.IsEqual("#1", msg) {
 	        	fmt.Println("Got ping message ")
-	        	w.Send(CreateMessageFromString("#2"));
+	        	w.Send(utils.CreateMessageFromString("#2"));
 	        } 
 	    },
 	    // Fires when an error occurs and connection is closed
@@ -63,7 +64,7 @@ func main() {
 	var i int
 	go handle_connection()
 
-	PrintMe("Enter any key to terminate the program")
+	utils.PrintMe("Enter any key to terminate the program")
 	fmt.Scan(&i)
 	// os.Exit(0)
 }
