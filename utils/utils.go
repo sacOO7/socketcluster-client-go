@@ -37,3 +37,8 @@ func SerializeData(data interface {}) [] byte {
     b, _ := json.Marshal(data)
     return b;
 }
+
+func DeserializeData(data [] byte) (jsonObject interface{}) {
+	json.Unmarshal(data, &jsonObject)
+	return
+}
