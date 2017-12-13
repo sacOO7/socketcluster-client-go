@@ -10,12 +10,12 @@ type HandShake struct {
 	Cid int `json:"cid"`
 }
 
-func GetHandshakeObject() HandShake{
+func GetHandshakeObject(authToken * string, messageId int) HandShake{
 	return HandShake {
 		Event : "#handshake", 
 		Data : AuthData {
-		 AuthToken : nil, 
+		 AuthToken : authToken, 
 		 } ,
-		Cid : 1,
+		Cid : messageId,
 	 }
 }	

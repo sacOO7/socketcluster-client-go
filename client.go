@@ -14,7 +14,7 @@ func handle_connection() {
 	    // Fires when the connection is established
 	    OnConnected: func(w *evtwebsocket.Conn) {
 	        fmt.Println("Connected!")
-	        handshake := SerializeData(models.GetHandshakeObject())
+	        handshake := SerializeData(models.GetHandshakeObject(nil, 1))
 	        w.Send(CreateMessageFromByte(handshake));
 	    },
 	    // Fires when a new message arrives from the server
