@@ -64,7 +64,7 @@ func main() {
 	var i int
 	go handle_connection()
 
-	utils.PrintMe("Enter any key to terminate the program")
+	utils.PrintMessage("Enter any key to terminate the program")
 	fmt.Scan(&i)
 	// os.Exit(0)
 }

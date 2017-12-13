@@ -22,3 +22,27 @@ func Parse(rid int, cid int, event interface{}) MessageType {
 		return ACKRECEIVE
 	}
 }
+
+
+func GetMessageDetails(message interface {}) (data interface {}, rid int, cid int, eventname string, error interface {}){
+	//Converting given message into map, with keys and values to that we can parse it
+
+	itemsMap := message.(map[string]interface{})
+
+	for itemKey, itemValue := range itemsMap {
+		switch itemKey {
+		case "data":
+			data = itemValue
+		case "rid":
+			rid = int (itemValue.(float64))
+		case "cid":
+			cid = int (itemValue.(float64))
+		case "event":
+			eventname = itemValue.(string)
+		case "error":
+			error = itemValue
+		}
+	}
+
+	return
+}

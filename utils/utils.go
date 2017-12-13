@@ -5,7 +5,7 @@ import (
     "encoding/json"
 )
 
-func PrintMe(message string) {
+func PrintMessage(message string) {
 	fmt.Println(message)
 }
 
