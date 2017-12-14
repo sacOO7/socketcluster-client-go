@@ -3,7 +3,7 @@ package tests
 import (
 	"testing"
 	"github.com/stretchr/testify/assert"
-	"../parser"
+	"../scclient/parser"
 	"encoding/json"
 )
 

@@ -3,8 +3,8 @@ package tests
 import (
 	"testing"
 	"github.com/stretchr/testify/assert"
-	"../utils"
-	"../models"
+	"../scclient/utils"
+	"../scclient/models"
 )
 
 func TestShouldCheckEqual(t *testing.T) {

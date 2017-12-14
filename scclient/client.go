@@ -1,4 +1,4 @@
-package main
+package scclient
 
 import (
 	"fmt"
@@ -12,7 +12,10 @@ import (
 	"./parser"
 )
 
-func handle_connection() {
+var authToken string
+
+
+func Handle_connection() {
 	conn := evtwebsocket.Conn{
 		// Fires when the connection is established
 		OnConnected: func(w *evtwebsocket.Conn) {
@@ -82,11 +85,3 @@ func handle_connection() {
 
 }
 
-func main() {
-	var i int
-	go handle_connection()
-
-	utils.PrintMessage("Enter any key to terminate the program")
-	fmt.Scan(&i)
-	// os.Exit(0)
-}
