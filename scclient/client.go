@@ -13,15 +13,14 @@ import (
 )
 
 var authToken string
-
+var counter uint64 = 0
 
 func Handle_connection() {
 	conn := evtwebsocket.Conn{
 		// Fires when the connection is established
 		OnConnected: func(w *evtwebsocket.Conn) {
 			fmt.Println("Connected!")
-			handshake := utils.SerializeData(models.GetHandshakeObject(nil, 1))
-			w.Send(utils.CreateMessageFromByte(handshake));
+			sendHandshake(w)
 		},
 		// Fires when a new message arrives from the server
 		OnMessage: func(msg []byte, w *evtwebsocket.Conn) {
@@ -82,6 +81,9 @@ func Handle_connection() {
 	}
 
 	conn.Send(msg)
-
 }
 
+func sendHandshake(w *evtwebsocket.Conn)  {
+	handshake := utils.SerializeData(models.GetHandshakeObject(nil, 1))
+	w.Send(utils.CreateMessageFromByte(handshake));
+}
