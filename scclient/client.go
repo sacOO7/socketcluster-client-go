@@ -12,15 +12,17 @@ import (
 	"./parser"
 )
 
-var authToken string
-var counter uint64 = 0
+var authToken * string
+var counter = utils.AtomicCounter{
+	Counter: 0,
+}
 
 func Handle_connection() {
 	conn := evtwebsocket.Conn{
 		// Fires when the connection is established
 		OnConnected: func(w *evtwebsocket.Conn) {
 			fmt.Println("Connected!")
-			sendHandshake(w)
+			sendHandshake(w, authToken, int(counter.IncrementAndGet()))
 		},
 		// Fires when a new message arrives from the server
 		OnMessage: func(msg []byte, w *evtwebsocket.Conn) {
@@ -36,18 +38,19 @@ func Handle_connection() {
 				parseresult := parser.Parse(rid, cid, eventname)
 
 				switch parseresult {
-					case parser.ISAUTHENTICATED:
-						utils.PrintMessage("got is authenticated message")
-					case parser.SETTOKEN:
-						utils.PrintMessage("got set token message")
-					case parser.REMOVETOKEN:
-						utils.PrintMessage("got remove token message")
-					case parser.EVENT:
-						utils.PrintMessage("got event receive message")
-					case parser.ACKRECEIVE:
-						utils.PrintMessage("got ack receive message")
-					case parser.PUBLISH:
-						utils.PrintMessage("got publish message")
+				case parser.ISAUTHENTICATED:
+					utils.PrintMessage("got is authenticated message")
+				case parser.SETTOKEN:
+					utils.PrintMessage("got set token message")
+				case parser.REMOVETOKEN:
+					utils.PrintMessage("got remove token message")
+					authToken = nil
+				case parser.EVENT:
+					utils.PrintMessage("got event receive message")
+				case parser.ACKRECEIVE:
+					utils.PrintMessage("got ack receive message")
+				case parser.PUBLISH:
+					utils.PrintMessage("got publish message")
 				}
 			}
 
@@ -83,7 +86,19 @@ func Handle_connection() {
 	conn.Send(msg)
 }
 
-func sendHandshake(w *evtwebsocket.Conn)  {
-	handshake := utils.SerializeData(models.GetHandshakeObject(nil, 1))
+func sendHandshake(w *evtwebsocket.Conn, authToken * string, messageId int) {
+	handshake := utils.SerializeData(models.GetHandshakeObject(authToken, messageId))
 	w.Send(utils.CreateMessageFromByte(handshake));
+}
+
+func GetAuthToken(message interface {}) string {
+	itemsMap := message.(map[string]interface{})
+	data := itemsMap["data"]
+	return data.(map[string]interface{})["token"].(string)
+}
+
+func GetIsAuthenticated(message interface {}) bool {
+	itemsMap := message.(map[string]interface{})
+	data := itemsMap["data"]
+	return data.(map[string]interface{})["isAuthenticated"].(bool)
 }
