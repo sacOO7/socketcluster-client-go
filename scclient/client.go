@@ -12,17 +12,23 @@ import (
 	"./parser"
 )
 
-var authToken * string
-var counter = utils.AtomicCounter{
-	Counter: 0,
+type Client struct {
+	authToken *string
+	url       string
+	counter   utils.AtomicCounter
+	socket    *evtwebsocket.Conn
 }
 
-func Handle_connection() {
-	conn := evtwebsocket.Conn{
+func NewClient(url string) Client {
+	return Client{url: url, counter: utils.AtomicCounter{Counter: 0}}
+}
+
+func (client *Client) registerCallbacks() {
+	client.socket = & evtwebsocket.Conn{
 		// Fires when the connection is established
 		OnConnected: func(w *evtwebsocket.Conn) {
 			fmt.Println("Connected!")
-			sendHandshake(w, authToken, int(counter.IncrementAndGet()))
+			client.sendHandshake()
 		},
 		// Fires when a new message arrives from the server
 		OnMessage: func(msg []byte, w *evtwebsocket.Conn) {
@@ -32,19 +38,23 @@ func Handle_connection() {
 				fmt.Println("Got ping message ")
 				w.Send(utils.CreateMessageFromString("#2"));
 			} else {
-				var jsonObject = utils.DeserializeData(msg)
-				_, rid, cid, eventname, _ := parser.GetMessageDetails(jsonObject)
+				var messageObject = utils.DeserializeData(msg)
+				_, rid, cid, eventname, _ := parser.GetMessageDetails(messageObject)
 
 				parseresult := parser.Parse(rid, cid, eventname)
 
 				switch parseresult {
 				case parser.ISAUTHENTICATED:
+					isAuthenticated := GetIsAuthenticated(messageObject)
+					fmt.Println("Is authenticated is ", isAuthenticated)
 					utils.PrintMessage("got is authenticated message")
 				case parser.SETTOKEN:
+					token := GetAuthToken(messageObject)
+					fmt.Println("token is ", token)
 					utils.PrintMessage("got set token message")
 				case parser.REMOVETOKEN:
 					utils.PrintMessage("got remove token message")
-					authToken = nil
+					client.authToken = nil
 				case parser.EVENT:
 					utils.PrintMessage("got event receive message")
 				case parser.ACKRECEIVE:
@@ -67,37 +77,29 @@ func Handle_connection() {
 		PingMsg: []byte("PING"),
 	}
 
-	// Connect
-	err := conn.Dial("ws://localhost:8000/socketcluster/", "")
-	// c.Send([]byte("TEST"), nil)
+}
 
+func (client *Client) Connect() {
+	client.registerCallbacks()
+	// Connect
+	err := client.socket.Dial(client.url, "")
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	msg := evtwebsocket.Msg{
-		Body: []byte("Hello buddy"),
-		Callback: func(resp []byte, conn *evtwebsocket.Conn) {
-			// This function executes when the server responds
-			fmt.Printf("Got response: %s\n", resp)
-		},
-	}
-
-	conn.Send(msg)
 }
 
-func sendHandshake(w *evtwebsocket.Conn, authToken * string, messageId int) {
-	handshake := utils.SerializeData(models.GetHandshakeObject(authToken, messageId))
-	w.Send(utils.CreateMessageFromByte(handshake));
+func (client *Client) sendHandshake() {
+	handshake := utils.SerializeData(models.GetHandshakeObject(client.authToken, int(client.counter.IncrementAndGet())))
+	client.socket.Send(utils.CreateMessageFromByte(handshake));
 }
 
-func GetAuthToken(message interface {}) string {
+func GetAuthToken(message interface{}) string {
 	itemsMap := message.(map[string]interface{})
 	data := itemsMap["data"]
 	return data.(map[string]interface{})["token"].(string)
 }
 
-func GetIsAuthenticated(message interface {}) bool {
+func GetIsAuthenticated(message interface{}) bool {
 	itemsMap := message.(map[string]interface{})
 	data := itemsMap["data"]
 	return data.(map[string]interface{})["isAuthenticated"].(bool)

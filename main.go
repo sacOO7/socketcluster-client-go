@@ -1,16 +1,19 @@
 package main
 
 import (
-	"fmt"
 	"./scclient"
 	"./scclient/utils"
+	"text/scanner"
+	"os"
 )
 
 func main() {
-	var i int
-	go scclient.Handle_connection()
+	var reader scanner.Scanner
+	client := scclient.NewClient("ws://localhost:8000/socketcluster/");
+	go client.Connect()
 
 	utils.PrintMessage("Enter any key to terminate the program")
-	fmt.Scan(&i)
+	reader.Init(os.Stdin)
+	reader.Next()
 	// os.Exit(0)
 }
