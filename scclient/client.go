@@ -8,41 +8,43 @@ import (
 	"./models"
 	"./utils"
 	"./parser"
+	"./listener"
 )
 
 type Client struct {
-	authToken *string
-	url       string
-	counter   utils.AtomicCounter
-	socket    *evtwebsocket.Conn
-	onConnect func()
-	onConnectError func(err error)
-	onDisconnect func(err error)
-	onSetAuthentication func(token string)
-	onAuthentication func(isAuthenticated bool)
+	authToken           *string
+	url                 string
+	counter             utils.AtomicCounter
+	socket              *evtwebsocket.Conn
+	onConnect           func(client Client)
+	onConnectError      func(client Client, err error)
+	onDisconnect        func(client Client, err error)
+	onSetAuthentication func(client Client, token string)
+	onAuthentication    func(client Client, isAuthenticated bool)
+	listener.Listener
 }
 
 func New(url string) Client {
-	return Client{url: url, counter: utils.AtomicCounter{Counter: 0}}
+	return Client{url: url, counter: utils.AtomicCounter{Counter: 0}, Listener: listener.Init()}
 }
 
-func (client *Client) SetBasicListener(onConnect func(), onConnectError func(err error), onDisconnect func(err error)) {
+func (client *Client) SetBasicListener(onConnect func(client Client), onConnectError func(client Client, err error), onDisconnect func(client Client, err error)) {
 	client.onConnect = onConnect
 	client.onConnectError = onConnectError
 	client.onDisconnect = onDisconnect
 }
 
-func (client *Client) SetAuthenticationListener(onSetAuthentication func(token string), onAuthentication func(isAuthenticated bool)) {
+func (client *Client) SetAuthenticationListener(onSetAuthentication func(client Client, token string), onAuthentication func(client Client, isAuthenticated bool)) {
 	client.onSetAuthentication = onSetAuthentication
 	client.onAuthentication = onAuthentication
 }
 
 func (client *Client) registerCallbacks() {
-	client.socket = & evtwebsocket.Conn{
+	client.socket = &evtwebsocket.Conn{
 		// Fires when the connection is established
 		OnConnected: func(w *evtwebsocket.Conn) {
 			if client.onConnect != nil {
-				client.onConnect()
+				client.onConnect(*client)
 			}
 			client.sendHandshake()
 		},
@@ -54,7 +56,7 @@ func (client *Client) registerCallbacks() {
 				w.Send(utils.CreateMessageFromString("#2"));
 			} else {
 				var messageObject = utils.DeserializeData(msg)
-				_, rid, cid, eventname, _ := parser.GetMessageDetails(messageObject)
+				data, rid, cid, eventname, error := parser.GetMessageDetails(messageObject)
 
 				parseresult := parser.Parse(rid, cid, eventname)
 
@@ -62,12 +64,12 @@ func (client *Client) registerCallbacks() {
 				case parser.ISAUTHENTICATED:
 					isAuthenticated := GetIsAuthenticated(messageObject)
 					if client.onAuthentication != nil {
-						client.onAuthentication(isAuthenticated);
+						client.onAuthentication(*client, isAuthenticated);
 					}
 				case parser.SETTOKEN:
 					token := GetAuthToken(messageObject)
 					if client.onSetAuthentication != nil {
-						client.onSetAuthentication(token)
+						client.onSetAuthentication(*client, token)
 					}
 
 				case parser.REMOVETOKEN:
@@ -76,6 +78,7 @@ func (client *Client) registerCallbacks() {
 				case parser.EVENT:
 					utils.PrintMessage("got event receive message")
 				case parser.ACKRECEIVE:
+					client.HandleEmitAck(rid, error, data)
 					utils.PrintMessage("got ack receive message")
 				case parser.PUBLISH:
 					utils.PrintMessage("got publish message")
@@ -86,7 +89,7 @@ func (client *Client) registerCallbacks() {
 		// Fires when an error occurs and connection is closed
 		OnError: func(err error) {
 			if client.onDisconnect != nil {
-				client.onDisconnect(err)
+				client.onDisconnect(*client, err)
 			}
 		},
 		// Ping interval in secs (optional)
@@ -103,7 +106,7 @@ func (client *Client) Connect() {
 	err := client.socket.Dial(client.url, "")
 	if err != nil {
 		if client.onConnectError != nil {
-			client.onConnectError(err)
+			client.onConnectError(*client, err)
 		}
 	}
 }
@@ -123,4 +126,18 @@ func GetIsAuthenticated(message interface{}) bool {
 	itemsMap := message.(map[string]interface{})
 	data := itemsMap["data"]
 	return data.(map[string]interface{})["isAuthenticated"].(bool)
+}
+
+func (client *Client) Emit(eventName string, data interface{}) {
+	emitObject := models.GetEmitEventObject(eventName, data, int(client.counter.IncrementAndGet()))
+	emitData := utils.SerializeData(emitObject)
+	client.socket.Send(utils.CreateMessageFromByte(emitData));
+}
+
+func (client *Client) EmitAck(eventName string, data interface{}, ack func(eventName string, error interface{}, data interface{})) {
+	id := int(client.counter.IncrementAndGet())
+	emitObject := models.GetEmitEventObject(eventName, data, id)
+	emitData := utils.SerializeData(emitObject)
+	client.PutEmitAck(id, eventName, ack)
+	client.socket.Send(utils.CreateMessageFromByte(emitData));
 }

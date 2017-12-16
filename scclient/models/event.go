@@ -41,7 +41,6 @@ func GetEmitEventObject(eventname string, data interface {}, messageId int) Emit
 	 }
 }
 
-
 func GetReceiveEventObject(data interface {},error interface {}, messageId int) ReceiveEvent{
 	return ReceiveEvent { 
 		Data : data,
