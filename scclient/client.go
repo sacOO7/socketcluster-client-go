@@ -1,12 +1,10 @@
 package scclient
 
 import (
-	"fmt"
+	"log"
 	_ "golang.org/x/net/websocket"
 	"github.com/rgamba/evtwebsocket"
-	"log"
 	_ "time"
-	"os"
 	"./models"
 	"./utils"
 	"./parser"
@@ -17,25 +15,42 @@ type Client struct {
 	url       string
 	counter   utils.AtomicCounter
 	socket    *evtwebsocket.Conn
+	onConnect func()
+	onConnectError func(err error)
+	onDisconnect func(err error)
+	onSetAuthentication func(token string)
+	onAuthentication func(isAuthenticated bool)
 }
 
-func NewClient(url string) Client {
+func New(url string) Client {
 	return Client{url: url, counter: utils.AtomicCounter{Counter: 0}}
+}
+
+func (client *Client) SetBasicListener(onConnect func(), onConnectError func(err error), onDisconnect func(err error)) {
+	client.onConnect = onConnect
+	client.onConnectError = onConnectError
+	client.onDisconnect = onDisconnect
+}
+
+func (client *Client) SetAuthenticationListener(onSetAuthentication func(token string), onAuthentication func(isAuthenticated bool)) {
+	client.onSetAuthentication = onSetAuthentication
+	client.onAuthentication = onAuthentication
 }
 
 func (client *Client) registerCallbacks() {
 	client.socket = & evtwebsocket.Conn{
 		// Fires when the connection is established
 		OnConnected: func(w *evtwebsocket.Conn) {
-			fmt.Println("Connected!")
+			if client.onConnect != nil {
+				client.onConnect()
+			}
 			client.sendHandshake()
 		},
 		// Fires when a new message arrives from the server
 		OnMessage: func(msg []byte, w *evtwebsocket.Conn) {
-			fmt.Printf("New message: %s\n", msg)
+			log.Printf("%s", msg)
 
 			if utils.IsEqual("#1", msg) {
-				fmt.Println("Got ping message ")
 				w.Send(utils.CreateMessageFromString("#2"));
 			} else {
 				var messageObject = utils.DeserializeData(msg)
@@ -46,12 +61,15 @@ func (client *Client) registerCallbacks() {
 				switch parseresult {
 				case parser.ISAUTHENTICATED:
 					isAuthenticated := GetIsAuthenticated(messageObject)
-					fmt.Println("Is authenticated is ", isAuthenticated)
-					utils.PrintMessage("got is authenticated message")
+					if client.onAuthentication != nil {
+						client.onAuthentication(isAuthenticated);
+					}
 				case parser.SETTOKEN:
 					token := GetAuthToken(messageObject)
-					fmt.Println("token is ", token)
-					utils.PrintMessage("got set token message")
+					if client.onSetAuthentication != nil {
+						client.onSetAuthentication(token)
+					}
+
 				case parser.REMOVETOKEN:
 					utils.PrintMessage("got remove token message")
 					client.authToken = nil
@@ -67,9 +85,9 @@ func (client *Client) registerCallbacks() {
 		},
 		// Fires when an error occurs and connection is closed
 		OnError: func(err error) {
-			fmt.Printf("Error: %s\n", err.Error())
-			os.Exit(1)
-
+			if client.onDisconnect != nil {
+				client.onDisconnect(err)
+			}
 		},
 		// Ping interval in secs (optional)
 		PingIntervalSecs: 5,
@@ -84,7 +102,9 @@ func (client *Client) Connect() {
 	// Connect
 	err := client.socket.Dial(client.url, "")
 	if err != nil {
-		log.Fatal(err)
+		if client.onConnectError != nil {
+			client.onConnectError(err)
+		}
 	}
 }
 
