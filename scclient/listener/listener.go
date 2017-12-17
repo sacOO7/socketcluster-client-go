@@ -2,15 +2,15 @@ package listener
 
 type Listener struct {
 	emitAckListener map[int][] interface{}
-	onListener      map[int]func(eventName string, data interface{})
-	onAckListener map[int]func(eventName string, data interface{}, ack func(error interface{}, data interface{}))
+	onListener      map[string]func(eventName string, data interface{})
+	onAckListener map[string]func(eventName string, data interface{}, ack func(error interface{}, data interface{}))
 }
 
 func Init() Listener {
 	return Listener{
 		emitAckListener: make(map[int][] interface{}),
-		onListener:      make(map[int]func(eventName string, data interface{})),
-		onAckListener: make(map[int]func(eventName string, data interface{}, ack func(error interface{}, data interface{}))),
+		onListener:      make(map[string]func(eventName string, data interface{})),
+		onAckListener: make(map[string]func(eventName string, data interface{}, ack func(error interface{}, data interface{}))),
 	}
 }
 
@@ -27,23 +27,23 @@ func (listener *Listener) HandleEmitAck(id int, error interface{}, data interfac
 	}
 }
 
-func (listener *Listener) PutOnListener(id int, onListener func(eventName string, data interface{})) {
-	listener.onListener[id] = onListener
+func (listener *Listener) PutOnListener(eventName string, onListener func(eventName string, data interface{})) {
+	listener.onListener[eventName] = onListener
 }
 
-func (listener *Listener) HandleOnListener(id int, eventName string, data interface{}) {
-	on := listener.onListener[id];
+func (listener *Listener) HandleOnListener(eventName string, data interface{}) {
+	on := listener.onListener[eventName];
 	if on != nil {
 		on(eventName, data);
 	}
 }
 
-func (listener *Listener) PutOnAckListener(id int, onAckListener func(eventName string, data interface{}, ack func(error interface{}, data interface{}))) {
-	listener.onAckListener[id] = onAckListener
+func (listener *Listener) PutOnAckListener(eventName string, onAckListener func(eventName string, data interface{}, ack func(error interface{}, data interface{}))) {
+	listener.onAckListener[eventName] = onAckListener
 }
 
-func (listener *Listener) HandleOnAckListener(id int, eventName string, data interface{}, ack func(error interface{}, data interface{})) {
-	onAck := listener.onAckListener[id]
+func (listener *Listener) HandleOnAckListener(eventName string, data interface{}, ack func(error interface{}, data interface{})) {
+	onAck := listener.onAckListener[eventName]
 	if onAck != nil {
 		onAck(eventName, data, ack)
 	}
