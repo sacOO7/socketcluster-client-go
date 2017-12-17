@@ -141,3 +141,45 @@ func (client *Client) EmitAck(eventName string, data interface{}, ack func(event
 	client.PutEmitAck(id, eventName, ack)
 	client.socket.Send(utils.CreateMessageFromByte(emitData));
 }
+
+func (client *Client) Subscribe (channelName string) {
+	subscribeObject := models.GetSubscribeEventObject(channelName, int(client.counter.IncrementAndGet()))
+	subscribeData := utils.SerializeData(subscribeObject)
+	client.socket.Send(utils.CreateMessageFromByte(subscribeData));
+}
+
+func (client *Client) SubscribeAck (channelName string, ack func(eventName string, error interface{}, data interface{})) {
+	id := int(client.counter.IncrementAndGet())
+	subscribeObject := models.GetSubscribeEventObject(channelName, id)
+	subscribeData := utils.SerializeData(subscribeObject)
+	client.PutEmitAck(id, channelName, ack)
+	client.socket.Send(utils.CreateMessageFromByte(subscribeData));
+}
+
+func (client *Client) Unsubscribe (channelName string) {
+	unsubscribeObject := models.GetUnsubscribeEventObject(channelName, int(client.counter.IncrementAndGet()))
+	unsubscribeData := utils.SerializeData(unsubscribeObject)
+	client.socket.Send(utils.CreateMessageFromByte(unsubscribeData));
+}
+
+func (client *Client) UnsubscribeAck (channelName string, ack func(eventName string, error interface{}, data interface{})) {
+	id := int(client.counter.IncrementAndGet())
+	unsubscribeObject := models.GetUnsubscribeEventObject(channelName, id)
+	unsubscribeData := utils.SerializeData(unsubscribeObject)
+	client.PutEmitAck(id, channelName, ack)
+	client.socket.Send(utils.CreateMessageFromByte(unsubscribeData));
+}
+
+func (client *Client) Publish (channelName string, data interface{}) {
+	publishObject := models.GetPublishEventObject(channelName, data, int(client.counter.IncrementAndGet()))
+	publishData := utils.SerializeData(publishObject)
+	client.socket.Send(utils.CreateMessageFromByte(publishData));
+}
+
+func (client *Client) PublishAck (channelName string, data interface{}, ack func(eventName string, error interface{}, data interface{})) {
+	id := int(client.counter.IncrementAndGet())
+	publishObject := models.GetPublishEventObject(channelName, data, id)
+	publishData := utils.SerializeData(publishObject)
+	client.PutEmitAck(id, channelName, ack)
+	client.socket.Send(utils.CreateMessageFromByte(publishData));
+}
