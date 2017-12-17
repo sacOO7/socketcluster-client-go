@@ -33,6 +33,11 @@ func GetReceiveEventObject(data interface{}, error interface{}, messageId int) R
 	}
 }
 
+func GetChannelObject(data interface{}) Channel {
+	channelObject := data.(map[string]interface{})
+	return Channel{Channel: channelObject["channel"].(string), Data: channelObject["data"]}
+}
+
 func GetSubscribeEventObject(channelName string, messageId int) EmitEvent {
 	return EmitEvent{
 		Event: "#subscribe",

@@ -29,14 +29,12 @@ func onSetAuthentication(client scclient.Client, token string) {
 
 func onAuthentication(client scclient.Client, isAuthenticated bool) {
 	fmt.Println("Client authenticated :", isAuthenticated)
-	client.EmitAck("chat", true, func(eventName string, error interface{}, data interface{}) {
-		fmt.Println("Got data in return ", data, " error ", error, eventName)
-	})
+	go start(client)
 }
 
 func main() {
 	var reader scanner.Scanner
-	client := scclient.New("ws://192.168.100.11:8000/socketcluster/");
+	client := scclient.New("ws://192.168.0.5:8000/socketcluster/");
 	client.SetBasicListener(onConnect, onConnectError, onDisconnect)
 	client.SetAuthenticationListener(onSetAuthentication, onAuthentication)
 	go client.Connect()
@@ -45,4 +43,8 @@ func main() {
 	reader.Init(os.Stdin)
 	reader.Next()
 	// os.Exit(0)
+}
+
+func start(client scclient.Client) {
+
 }

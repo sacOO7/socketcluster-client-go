@@ -1,6 +1,5 @@
 package parser
 
-
 func Parse(rid int, cid int, event interface{}) MessageType {
 	if event != nil {
 		if event == "#publish" {
@@ -23,8 +22,7 @@ func Parse(rid int, cid int, event interface{}) MessageType {
 	}
 }
 
-
-func GetMessageDetails(message interface {}) (data interface {}, rid int, cid int, eventname interface {}, error interface {}){
+func GetMessageDetails(message interface{}) (data interface{}, rid int, cid int, eventname interface{}, error interface{}) {
 	//Converting given message into map, with keys and values to that we can parse it
 
 	itemsMap := message.(map[string]interface{})
@@ -34,11 +32,11 @@ func GetMessageDetails(message interface {}) (data interface {}, rid int, cid in
 		case "data":
 			data = itemValue
 		case "rid":
-			rid = int (itemValue.(float64))
+			rid = int(itemValue.(float64))
 		case "cid":
-			cid = int (itemValue.(float64))
+			cid = int(itemValue.(float64))
 		case "event":
-			eventname = itemValue.(string)
+			eventname = itemValue
 		case "error":
 			error = itemValue
 		}

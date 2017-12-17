@@ -17,7 +17,6 @@ func TestShouldReturnIncrementedValue(t *testing.T) {
 	assert.Equal(t, uint64(1), counter.Value())
 }
 
-
 func TestShouldGetAndIncrementValue(t *testing.T) {
 	counter := utils.AtomicCounter{
 		Counter: 0,
