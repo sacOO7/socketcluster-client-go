@@ -46,5 +46,5 @@ func main() {
 }
 
 func start(client scclient.Client) {
-
+	// start writing your code from here
 }

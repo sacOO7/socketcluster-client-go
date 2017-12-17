@@ -48,12 +48,10 @@ Different functions are given as an argument to register listeners
         
         func onDisconnect(client scclient.Client, err error) {
             fmt.Printf("Error: %s\n", err.Error())
-            os.Exit(1)
         }
         
         func onConnectError(client scclient.Client, err error) {
             fmt.Printf("Error: %s\n", err.Error())
-            os.Exit(1)
         }
         
         func onSetAuthentication(client scclient.Client, token string) {
@@ -63,6 +61,7 @@ Different functions are given as an argument to register listeners
         
         func onAuthentication(client scclient.Client, isAuthenticated bool) {
             fmt.Println("Client authenticated :", isAuthenticated)
+            go startCode(client)
         }  
             
         func main() {
@@ -76,6 +75,11 @@ Different functions are given as an argument to register listeners
         	reader.Init(os.Stdin)
         	reader.Next()
         	// os.Exit(0)
+        }
+        
+        func startCode(client scclient.Client) {
+        	// start writing your code from here
+        	// All emit, receive and publish events
         }
         
 ```
