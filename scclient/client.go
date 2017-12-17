@@ -61,7 +61,6 @@ func (client *Client) registerCallbacks() {
 
 				switch parseresult {
 				case parser.ISAUTHENTICATED:
-					log.Printf("%s", "got here")
 					isAuthenticated := utils.GetIsAuthenticated(messageObject)
 					if client.onAuthentication != nil {
 						client.onAuthentication(*client, isAuthenticated);
@@ -95,10 +94,6 @@ func (client *Client) registerCallbacks() {
 				client.onDisconnect(*client, err)
 			}
 		},
-		// Ping interval in secs (optional)
-		PingIntervalSecs: 5,
-		// Ping message to send (optional)
-		PingMsg: []byte("PING"),
 	}
 
 }

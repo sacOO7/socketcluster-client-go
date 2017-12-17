@@ -34,7 +34,7 @@ func onAuthentication(client scclient.Client, isAuthenticated bool) {
 
 func main() {
 	var reader scanner.Scanner
-	client := scclient.New("ws://192.168.0.5:8000/socketcluster/");
+	client := scclient.New("ws://192.168.100.11:8000/socketcluster/");
 	client.SetBasicListener(onConnect, onConnectError, onDisconnect)
 	client.SetAuthenticationListener(onSetAuthentication, onAuthentication)
 	go client.Connect()
