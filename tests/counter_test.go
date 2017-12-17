@@ -3,7 +3,7 @@ package tests
 import (
 	"testing"
 	"github.com/stretchr/testify/assert"
-	"../scclient/utils"
+	"github.com/sacOO7/socketcluster-client-go/scclient/utils"
 )
 
 func TestShouldReturnIncrementedValue(t *testing.T) {

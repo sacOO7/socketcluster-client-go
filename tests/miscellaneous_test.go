@@ -3,8 +3,8 @@ package tests
 import (
 	"testing"
 	"github.com/stretchr/testify/assert"
-	"../scclient/utils"
-	"../scclient/models"
+	"github.com/sacOO7/socketcluster-client-go/scclient/utils"
+	"github.com/sacOO7/socketcluster-client-go/scclient/models"
 )
 
 func TestShouldCheckEqual(t *testing.T) {

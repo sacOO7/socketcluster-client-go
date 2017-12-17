@@ -4,7 +4,7 @@ import (
 	"testing"
 	"github.com/stretchr/testify/assert"
 	"encoding/json"
-	"../scclient/utils"
+	"github.com/sacOO7/socketcluster-client-go/scclient/utils"
 )
 
 func TestShouldReturnAuthToken(t *testing.T) {

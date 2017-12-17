@@ -5,9 +5,9 @@ import (
 	_ "golang.org/x/net/websocket"
 	"github.com/rgamba/evtwebsocket"
 	_ "time"
-	"./models"
-	"./utils"
-	"./parser"
+	"github.com/sacOO7/socketcluster-client-go/scclient/models"
+	"github.com/sacOO7/socketcluster-client-go/scclient/utils"
+	"github.com/sacOO7/socketcluster-client-go/scclient/parser"
 )
 
 type Client struct {
