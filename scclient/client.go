@@ -41,10 +41,10 @@ func (client *Client) SetAuthenticationListener(onSetAuthentication func(client 
 func (client *Client) registerCallbacks() {
 
 	client.socket.OnConnected = func(socket gowebsocket.Socket) {
+		client.sendHandshake()
 		if client.onConnect != nil {
 			client.onConnect(*client)
 		}
-		client.sendHandshake()
 	};
 
 	client.socket.OnConnectError = func(err error, socket gowebsocket.Socket) {
@@ -106,9 +106,9 @@ func (client *Client) registerCallbacks() {
 }
 
 func (client *Client) Connect() {
+	client.socket = gowebsocket.New(client.url)
 	client.registerCallbacks()
 	// Connect
-	client.socket = gowebsocket.New(client.url)
 	client.socket.Connect()
 }
 
