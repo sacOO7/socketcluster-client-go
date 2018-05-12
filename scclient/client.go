@@ -3,18 +3,18 @@ package scclient
 import (
 	"log"
 	_ "golang.org/x/net/websocket"
-	"github.com/rgamba/evtwebsocket"
 	_ "time"
 	"github.com/sacOO7/socketcluster-client-go/scclient/models"
 	"github.com/sacOO7/socketcluster-client-go/scclient/utils"
 	"github.com/sacOO7/socketcluster-client-go/scclient/parser"
+	"github.com/sacOO7/gowebsocket"
 )
 
 type Client struct {
 	authToken           *string
 	url                 string
 	counter             utils.AtomicCounter
-	socket              *evtwebsocket.Conn
+	socket              gowebsocket.Socket
 	onConnect           func(client Client)
 	onConnectError      func(client Client, err error)
 	onDisconnect        func(client Client, err error)
@@ -39,143 +39,146 @@ func (client *Client) SetAuthenticationListener(onSetAuthentication func(client 
 }
 
 func (client *Client) registerCallbacks() {
-	client.socket = &evtwebsocket.Conn{
-		// Fires when the connection is established
-		OnConnected: func(w *evtwebsocket.Conn) {
-			if client.onConnect != nil {
-				client.onConnect(*client)
+
+	client.socket.OnConnected = func(socket gowebsocket.Socket) {
+		client.sendHandshake()
+		if client.onConnect != nil {
+			client.onConnect(*client)
+		}
+	};
+
+	client.socket.OnConnectError = func(err error, socket gowebsocket.Socket) {
+		if err != nil {
+			if client.onConnectError != nil {
+				client.onConnectError(*client, err)
 			}
-			client.sendHandshake()
-		},
-		// Fires when a new message arrives from the server
-		OnMessage: func(msg []byte, w *evtwebsocket.Conn) {
-			log.Printf("%s", msg)
+		}
+	};
 
-			if utils.IsEqual("#1", msg) {
-				w.Send(utils.CreateMessageFromString("#2"));
-			} else {
-				var messageObject = utils.DeserializeData(msg)
-				data, rid, cid, eventname, error := parser.GetMessageDetails(messageObject)
+	client.socket.OnTextMessage = func(message string, socket gowebsocket.Socket) {
+		log.Printf("%s", message)
 
-				parseresult := parser.Parse(rid, cid, eventname)
+		if message == "#1" {
+			client.socket.SendText("#2");
+		} else {
+			var messageObject = utils.DeserializeDataFromString(message)
+			data, rid, cid, eventname, error := parser.GetMessageDetails(messageObject)
 
-				switch parseresult {
-				case parser.ISAUTHENTICATED:
-					isAuthenticated := utils.GetIsAuthenticated(messageObject)
-					if client.onAuthentication != nil {
-						client.onAuthentication(*client, isAuthenticated);
-					}
-				case parser.SETTOKEN:
-					token := utils.GetAuthToken(messageObject)
-					if client.onSetAuthentication != nil {
-						client.onSetAuthentication(*client, token)
-					}
+			parseresult := parser.Parse(rid, cid, eventname)
 
-				case parser.REMOVETOKEN:
-					client.authToken = nil
-				case parser.EVENT:
-					if client.hasEventAck(eventname.(string)) {
-						client.handleOnAckListener(eventname.(string), data, client.ack(cid))
-					} else {
-						client.handleOnListener(eventname.(string), data)
-					}
-				case parser.ACKRECEIVE:
-					client.handleEmitAck(rid, error, data)
-				case parser.PUBLISH:
-					channel := models.GetChannelObject(data)
-					client.handleOnListener(channel.Channel, channel.Data)
+			switch parseresult {
+			case parser.ISAUTHENTICATED:
+				isAuthenticated := utils.GetIsAuthenticated(messageObject)
+				if client.onAuthentication != nil {
+					client.onAuthentication(*client, isAuthenticated);
 				}
-			}
+			case parser.SETTOKEN:
+				token := utils.GetAuthToken(messageObject)
+				if client.onSetAuthentication != nil {
+					client.onSetAuthentication(*client, token)
+				}
 
-		},
-		// Fires when an error occurs and connection is closed
-		OnError: func(err error) {
-			if client.onDisconnect != nil {
-				client.onDisconnect(*client, err)
+			case parser.REMOVETOKEN:
+				client.authToken = nil
+			case parser.EVENT:
+				if client.hasEventAck(eventname.(string)) {
+					client.handleOnAckListener(eventname.(string), data, client.ack(cid))
+				} else {
+					client.handleOnListener(eventname.(string), data)
+				}
+			case parser.ACKRECEIVE:
+				client.handleEmitAck(rid, error, data)
+			case parser.PUBLISH:
+				channel := models.GetChannelObject(data)
+				client.handleOnListener(channel.Channel, channel.Data)
 			}
-		},
+		}
+	};
+
+
+	client.socket.OnDisconnected = func(err error, socket gowebsocket.Socket) {
+		if client.onDisconnect != nil {
+			client.onDisconnect(*client, err)
+		}
+		return
 	}
 
 }
 
 func (client *Client) Connect() {
+	client.socket = gowebsocket.New(client.url)
 	client.registerCallbacks()
 	// Connect
-	err := client.socket.Dial(client.url, "")
-	if err != nil {
-		if client.onConnectError != nil {
-			client.onConnectError(*client, err)
-		}
-	}
+	client.socket.Connect()
 }
 
 func (client *Client) sendHandshake() {
-	handshake := utils.SerializeData(models.GetHandshakeObject(client.authToken, int(client.counter.IncrementAndGet())))
-	client.socket.Send(utils.CreateMessageFromByte(handshake));
+	handshake := utils.SerializeDataIntoString(models.GetHandshakeObject(client.authToken, int(client.counter.IncrementAndGet())))
+	client.socket.SendText(handshake);
 }
 
 func (client *Client) ack(cid int) func(error interface{}, data interface{}) {
 	return func(error interface{}, data interface{}) {
 		ackObject := models.GetReceiveEventObject(data, error, cid);
-		ackData := utils.SerializeData(ackObject)
-		client.socket.Send(utils.CreateMessageFromByte(ackData));
+		ackData := utils.SerializeDataIntoString(ackObject)
+		client.socket.SendText(ackData);
 	}
 }
 
 func (client *Client) Emit(eventName string, data interface{}) {
 	emitObject := models.GetEmitEventObject(eventName, data, int(client.counter.IncrementAndGet()))
-	emitData := utils.SerializeData(emitObject)
-	client.socket.Send(utils.CreateMessageFromByte(emitData));
+	emitData := utils.SerializeDataIntoString(emitObject)
+	client.socket.SendText(emitData);
 }
 
 func (client *Client) EmitAck(eventName string, data interface{}, ack func(eventName string, error interface{}, data interface{})) {
 	id := int(client.counter.IncrementAndGet())
 	emitObject := models.GetEmitEventObject(eventName, data, id)
-	emitData := utils.SerializeData(emitObject)
+	emitData := utils.SerializeDataIntoString(emitObject)
 	client.putEmitAck(id, eventName, ack)
-	client.socket.Send(utils.CreateMessageFromByte(emitData));
+	client.socket.SendText(emitData);
 }
 
 func (client *Client) Subscribe(channelName string) {
 	subscribeObject := models.GetSubscribeEventObject(channelName, int(client.counter.IncrementAndGet()))
-	subscribeData := utils.SerializeData(subscribeObject)
-	client.socket.Send(utils.CreateMessageFromByte(subscribeData));
+	subscribeData := utils.SerializeDataIntoString(subscribeObject)
+	client.socket.SendText(subscribeData);
 }
 
 func (client *Client) SubscribeAck(channelName string, ack func(eventName string, error interface{}, data interface{})) {
 	id := int(client.counter.IncrementAndGet())
 	subscribeObject := models.GetSubscribeEventObject(channelName, id)
-	subscribeData := utils.SerializeData(subscribeObject)
+	subscribeData := utils.SerializeDataIntoString(subscribeObject)
 	client.putEmitAck(id, channelName, ack)
-	client.socket.Send(utils.CreateMessageFromByte(subscribeData));
+	client.socket.SendText(subscribeData);
 }
 
 func (client *Client) Unsubscribe(channelName string) {
 	unsubscribeObject := models.GetUnsubscribeEventObject(channelName, int(client.counter.IncrementAndGet()))
-	unsubscribeData := utils.SerializeData(unsubscribeObject)
-	client.socket.Send(utils.CreateMessageFromByte(unsubscribeData));
+	unsubscribeData := utils.SerializeDataIntoString(unsubscribeObject)
+	client.socket.SendText(unsubscribeData);
 }
 
 func (client *Client) UnsubscribeAck(channelName string, ack func(eventName string, error interface{}, data interface{})) {
 	id := int(client.counter.IncrementAndGet())
 	unsubscribeObject := models.GetUnsubscribeEventObject(channelName, id)
-	unsubscribeData := utils.SerializeData(unsubscribeObject)
+	unsubscribeData := utils.SerializeDataIntoString(unsubscribeObject)
 	client.putEmitAck(id, channelName, ack)
-	client.socket.Send(utils.CreateMessageFromByte(unsubscribeData));
+	client.socket.SendText(unsubscribeData);
 }
 
 func (client *Client) Publish(channelName string, data interface{}) {
 	publishObject := models.GetPublishEventObject(channelName, data, int(client.counter.IncrementAndGet()))
-	publishData := utils.SerializeData(publishObject)
-	client.socket.Send(utils.CreateMessageFromByte(publishData));
+	publishData := utils.SerializeDataIntoString(publishObject)
+	client.socket.SendText(publishData);
 }
 
 func (client *Client) PublishAck(channelName string, data interface{}, ack func(eventName string, error interface{}, data interface{})) {
 	id := int(client.counter.IncrementAndGet())
 	publishObject := models.GetPublishEventObject(channelName, data, id)
-	publishData := utils.SerializeData(publishObject)
+	publishData := utils.SerializeDataIntoString(publishObject)
 	client.putEmitAck(id, channelName, ack)
-	client.socket.Send(utils.CreateMessageFromByte(publishData));
+	client.socket.SendText(publishData);
 }
 
 func (client *Client) OnChannel(eventName string, ack func(eventName string, data interface{})) {
