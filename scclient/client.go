@@ -8,6 +8,7 @@ import (
 	"github.com/sacOO7/socketcluster-client-go/scclient/utils"
 	"github.com/sacOO7/socketcluster-client-go/scclient/parser"
 	"github.com/sacOO7/gowebsocket"
+	"net/http"
 )
 
 type Client struct {
@@ -20,11 +21,17 @@ type Client struct {
 	onDisconnect        func(client Client, err error)
 	onSetAuthentication func(client Client, token string)
 	onAuthentication    func(client Client, isAuthenticated bool)
+	ConnectionOptions   gowebsocket.ConnectionOptions
+	RequestHeader       http.Header
 	Listener
 }
 
 func New(url string) Client {
 	return Client{url: url, counter: utils.AtomicCounter{Counter: 0}, Listener: Init()}
+}
+
+func (client *Client) IsConnected() bool {
+	return client.socket.IsConnected
 }
 
 func (client *Client) SetBasicListener(onConnect func(client Client), onConnectError func(client Client, err error), onDisconnect func(client Client, err error)) {
@@ -41,6 +48,7 @@ func (client *Client) SetAuthenticationListener(onSetAuthentication func(client 
 func (client *Client) registerCallbacks() {
 
 	client.socket.OnConnected = func(socket gowebsocket.Socket) {
+		client.counter.Reset()
 		client.sendHandshake()
 		if client.onConnect != nil {
 			client.onConnect(*client)
@@ -109,6 +117,8 @@ func (client *Client) Connect() {
 	client.socket = gowebsocket.New(client.url)
 	client.registerCallbacks()
 	// Connect
+	client.socket.ConnectionOptions = client.ConnectionOptions
+	client.socket.RequestHeader = client.RequestHeader
 	client.socket.Connect()
 }
 
@@ -191,4 +201,8 @@ func (client *Client) On(eventName string, ack func(eventName string, data inter
 
 func (client *Client) OnAck(eventName string, ack func(eventName string, data interface{}, ack func(error interface{}, data interface{}))) {
 	client.putOnAckListener(eventName, ack)
+}
+
+func (client *Client) Disconnect() {
+	client.socket.Close()
 }

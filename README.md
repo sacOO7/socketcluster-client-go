@@ -206,3 +206,40 @@ Implementing Pub-Sub via channels
             }
         })
 ```
+
+#### Closing the connection with server
+```go
+    client.Disconnect()
+```
+
+#### Setting request headers
+```go
+	client.RequestHeader.Set("Accept-Encoding","gzip, deflate, sdch")
+	client.RequestHeader.Set("Accept-Language","en-US,en;q=0.8")
+	client.RequestHeader.Set("Pragma","no-cache")
+	client.RequestHeader.Set("User-Agent","Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.87 Safari/537.36")
+	
+```
+
+#### Setting proxy server
+- It can be set using connectionOptions by providing url to proxy server
+
+```go
+    client.ConnectionOptions = gowebsocket.ConnectionOptions {
+       Proxy: gowebsocket.BuildProxy("http://example.com"),
+    }
+```
+
+#### Setting data compression, ssl verification and subprotocols
+
+- It can be set using connectionOptions inside socket 
+
+```go
+    client.ConnectionOptions = gowebsocket.ConnectionOptions {
+        UseSSL:true,
+        UseCompression:true,
+        Subprotocols: [] string{"chat","superchat"},
+    }
+```
+
+- ConnectionOptions needs to be applied before connecting to server
