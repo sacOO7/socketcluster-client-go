@@ -34,6 +34,14 @@ func (client *Client) IsConnected() bool {
 	return client.socket.IsConnected
 }
 
+func (client *Client) SetAuthToken(token string) {
+	client.authToken = &token
+}
+
+func (client *Client) GetAuthToken() string {
+	return *client.authToken;
+}
+
 func (client *Client) SetBasicListener(onConnect func(client Client), onConnectError func(client Client, err error), onDisconnect func(client Client, err error)) {
 	client.onConnect = onConnect
 	client.onConnectError = onConnectError
