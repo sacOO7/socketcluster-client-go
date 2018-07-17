@@ -5,7 +5,6 @@ import (
 	"text/scanner"
 	"os"
 	"fmt"
-	_ "log"
 )
 
 func onConnect(client scclient.Client) {
@@ -29,14 +28,14 @@ func onSetAuthentication(client scclient.Client, token string) {
 
 func onAuthentication(client scclient.Client, isAuthenticated bool) {
 	fmt.Println("Client authenticated :", isAuthenticated)
-	go start(client)
 }
 
 func main() {
 	var reader scanner.Scanner
-	client := scclient.New("ws://192.168.100.14:8000/socketcluster/");
+	client := scclient.New("ws://localhost:8000/socketcluster/");
 	client.SetBasicListener(onConnect, onConnectError, onDisconnect)
 	client.SetAuthenticationListener(onSetAuthentication, onAuthentication)
+	client.EnableLogging()
 	go client.Connect()
 
 	fmt.Println("Enter any key to terminate the program")

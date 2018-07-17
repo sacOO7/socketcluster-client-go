@@ -1,5 +1,14 @@
 package scclient
 
+import (
+	"github.com/sacOO7/socketcluster-client-go/scclient/logging"
+	"reflect"
+)
+
+type Empty struct{}
+
+var scLogger = logging.GetLogger(reflect.TypeOf(Empty{}).PkgPath()).SetLevel(logging.OFF)
+
 type Listener struct {
 	emitAckListener map[int][] interface{}
 	onListener      map[string]func(eventName string, data interface{})
@@ -22,8 +31,11 @@ func (listener *Listener) handleEmitAck(id int, error interface{}, data interfac
 	ackObject := listener.emitAckListener[id];
 	if ackObject != nil {
 		eventName := ackObject[0].(string)
+		scLogger.Trace.Println("Ack received for event :: ", eventName)
 		ack := ackObject[1].(func(eventName string, error interface{}, data interface{}))
 		ack(eventName, error, data);
+	} else {
+		scLogger.Warning.Println("Ack function not found for rid :: ", id)
 	}
 }
 

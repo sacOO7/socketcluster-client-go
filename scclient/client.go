@@ -1,7 +1,6 @@
 package scclient
 
 import (
-	"log"
 	_ "golang.org/x/net/websocket"
 	_ "time"
 	"github.com/sacOO7/socketcluster-client-go/scclient/models"
@@ -9,6 +8,7 @@ import (
 	"github.com/sacOO7/socketcluster-client-go/scclient/parser"
 	"github.com/sacOO7/gowebsocket"
 	"net/http"
+	"github.com/sacOO7/socketcluster-client-go/scclient/logging"
 )
 
 type Client struct {
@@ -27,11 +27,23 @@ type Client struct {
 }
 
 func New(url string) Client {
-	return Client{url: url, counter: utils.AtomicCounter{Counter: 0}, Listener: Init()}
+
+	return Client{
+		url:      url,
+		counter:  utils.AtomicCounter{Counter: 0},
+		Listener: Init()}
 }
 
 func (client *Client) IsConnected() bool {
 	return client.socket.IsConnected
+}
+
+func (client *Client) EnableLogging() {
+	scLogger.SetLevel(logging.TRACE)
+}
+
+func (client *Client) GetLogger() logging.Logger {
+	return scLogger;
 }
 
 func (client *Client) SetAuthToken(token string) {
@@ -62,7 +74,6 @@ func (client *Client) registerCallbacks() {
 			client.onConnect(*client)
 		}
 	};
-
 	client.socket.OnConnectError = func(err error, socket gowebsocket.Socket) {
 		if err != nil {
 			if client.onConnectError != nil {
@@ -70,9 +81,8 @@ func (client *Client) registerCallbacks() {
 			}
 		}
 	};
-
 	client.socket.OnTextMessage = func(message string, socket gowebsocket.Socket) {
-		log.Printf("%s", message)
+		scLogger.Info.Printf("%s", message)
 
 		if message == "#1" {
 			client.socket.SendText("#2");
@@ -89,14 +99,17 @@ func (client *Client) registerCallbacks() {
 					client.onAuthentication(*client, isAuthenticated);
 				}
 			case parser.SETTOKEN:
+				scLogger.Trace.Println("Set token event received")
 				token := utils.GetAuthToken(messageObject)
 				if client.onSetAuthentication != nil {
 					client.onSetAuthentication(*client, token)
 				}
 
 			case parser.REMOVETOKEN:
+				scLogger.Trace.Println("Remove token event received")
 				client.authToken = nil
 			case parser.EVENT:
+				scLogger.Trace.Println("Received data for event :: ", eventname)
 				if client.hasEventAck(eventname.(string)) {
 					client.handleOnAckListener(eventname.(string), data, client.ack(cid))
 				} else {
@@ -106,12 +119,11 @@ func (client *Client) registerCallbacks() {
 				client.handleEmitAck(rid, error, data)
 			case parser.PUBLISH:
 				channel := models.GetChannelObject(data)
+				scLogger.Trace.Println("Publish event received for channel :: ", channel.Channel)
 				client.handleOnListener(channel.Channel, channel.Data)
 			}
 		}
 	};
-
-
 	client.socket.OnDisconnected = func(err error, socket gowebsocket.Socket) {
 		if client.onDisconnect != nil {
 			client.onDisconnect(*client, err)
