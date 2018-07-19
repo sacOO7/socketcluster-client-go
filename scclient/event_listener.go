@@ -1,8 +1,8 @@
 package scclient
 
 import (
-	"github.com/sacOO7/socketcluster-client-go/scclient/logging"
 	"reflect"
+	"github.com/sacOO7/go-logger"
 )
 
 type Empty struct{}

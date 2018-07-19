@@ -8,7 +8,7 @@ import (
 	"github.com/sacOO7/socketcluster-client-go/scclient/parser"
 	"github.com/sacOO7/gowebsocket"
 	"net/http"
-	"github.com/sacOO7/socketcluster-client-go/scclient/logging"
+	"github.com/sacOO7/go-logger"
 )
 
 type Client struct {
