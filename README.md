@@ -1,4 +1,7 @@
 # socketcluster-client-go
+
+**This is a modified fork from the original [sac007](https://github.com/sac007/socketcluster-client-go) version**
+
 Refer examples for more details :
     
 Overview
@@ -14,7 +17,7 @@ This client provides following functionality
 To install use
 
 ```markdown
-    go get github.com/sacOO7/socketcluster-client-go/scclient
+    go get github.com/breiting/socketcluster-client-go/scclient
 ```
 
 Description
