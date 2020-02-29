@@ -84,8 +84,8 @@ func (client *Client) registerCallbacks() {
 	client.socket.OnTextMessage = func(message string, socket gowebsocket.Socket) {
 		scLogger.Info.Printf("%s", message)
 
-		if message == "#1" {
-			client.socket.SendText("#2");
+		if message == "" {
+			client.socket.SendText("");
 		} else {
 			var messageObject = utils.DeserializeDataFromString(message)
 			data, rid, cid, eventname, error := parser.GetMessageDetails(messageObject)
