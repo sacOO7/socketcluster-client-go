@@ -25,7 +25,10 @@ func Parse(rid int, cid int, event interface{}) MessageType {
 func GetMessageDetails(message interface{}) (data interface{}, rid int, cid int, eventname interface{}, error interface{}) {
 	//Converting given message into map, with keys and values to that we can parse it
 
-	itemsMap := message.(map[string]interface{})
+	itemsMap, ok := message.(map[string]interface{})
+	if !ok {
+		return
+	}
 
 	for itemKey, itemValue := range itemsMap {
 		switch itemKey {
