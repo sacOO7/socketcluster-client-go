@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/sacOO7/socketcluster-client-go/scclient/parser"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -54,5 +55,5 @@ func TestShouldReturnMessageDetails(t *testing.T) {
 	assert.Equal(t, 1, cid)
 	assert.Equal(t, "#removeAuthToken", eventname)
 	assert.Equal(t, "This is a sample error", error)
-	assert.NilError(t, err)
+	assert.Nil(t, err)
 }
