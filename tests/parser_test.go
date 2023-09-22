@@ -1,10 +1,12 @@
 package tests
 
 import (
-	"testing"
-	"github.com/stretchr/testify/assert"
-	"github.com/sacOO7/socketcluster-client-go/scclient/parser"
 	"encoding/json"
+	"testing"
+
+	"github.com/sacOO7/socketcluster-client-go/scclient/parser"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestShouldReturnPublish(t *testing.T) {
@@ -46,12 +48,12 @@ func TestShouldReturnAckReceive(t *testing.T) {
 func TestShouldReturnMessageDetails(t *testing.T) {
 	message := "{\"event\":\"#removeAuthToken\",\"data\":\"This is a sample data\",\"cid\":1, \"rid\":2, \"error\":\"This is a sample error\"}"
 	var jsonObject interface{}
-	json.Unmarshal([] byte (message), &jsonObject)
-	data, rid, cid, eventname, error := parser.GetMessageDetails(jsonObject)
+	json.Unmarshal([]byte(message), &jsonObject)
+	data, rid, cid, eventname, error, err := parser.GetMessageDetails(jsonObject)
 	assert.Equal(t, "This is a sample data", data)
 	assert.Equal(t, 2, rid)
 	assert.Equal(t, 1, cid)
 	assert.Equal(t, "#removeAuthToken", eventname)
 	assert.Equal(t, "This is a sample error", error)
-
+	assert.Nil(t, err)
 }

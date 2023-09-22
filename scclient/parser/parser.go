@@ -1,5 +1,7 @@
 package parser
 
+import "errors"
+
 func Parse(rid int, cid int, event interface{}) MessageType {
 	if event != nil {
 		if event == "#publish" {
@@ -22,10 +24,14 @@ func Parse(rid int, cid int, event interface{}) MessageType {
 	}
 }
 
-func GetMessageDetails(message interface{}) (data interface{}, rid int, cid int, eventname interface{}, error interface{}) {
+func GetMessageDetails(message interface{}) (data interface{}, rid int, cid int, eventname interface{}, error interface{}, err error) {
 	//Converting given message into map, with keys and values to that we can parse it
 
-	itemsMap := message.(map[string]interface{})
+	itemsMap, ok := message.(map[string]interface{})
+	if !ok {
+		err = errors.New("unable to convert message")
+		return
+	}
 
 	for itemKey, itemValue := range itemsMap {
 		switch itemKey {

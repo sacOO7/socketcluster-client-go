@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/sacOO7/socketcluster-client-go/scclient"
-	"text/scanner"
-	"os"
 	"fmt"
+	"os"
+	"text/scanner"
+
+	"github.com/sacOO7/socketcluster-client-go/scclient"
 )
 
 func onConnect(client scclient.Client) {
@@ -32,7 +33,7 @@ func onAuthentication(client scclient.Client, isAuthenticated bool) {
 
 func main() {
 	var reader scanner.Scanner
-	client := scclient.New("ws://localhost:8000/socketcluster/");
+	client := scclient.New("ws://localhost:8000/socketcluster/")
 	client.SetBasicListener(onConnect, onConnectError, onDisconnect)
 	client.SetAuthenticationListener(onSetAuthentication, onAuthentication)
 	client.EnableLogging()

@@ -2,13 +2,15 @@ package tests
 
 import (
 	"testing"
-	"github.com/stretchr/testify/assert"
-	"github.com/sacOO7/socketcluster-client-go/scclient/utils"
+
 	"github.com/sacOO7/socketcluster-client-go/scclient/models"
+	"github.com/sacOO7/socketcluster-client-go/scclient/utils"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestShouldCheckEqual(t *testing.T) {
-	expected := [] byte("mystring")
+	expected := []byte("mystring")
 	assert.True(t, utils.IsEqual("mystring", expected), "String and byte [] should be equal")
 
 }
