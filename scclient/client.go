@@ -88,6 +88,8 @@ func (client *Client) registerCallbacks() {
 
 		if message == "" {
 			client.socket.SendText("")
+		} else if message == "#1" { //protocol v1 ping
+			client.socket.SendText("#2")			
 		} else {
 			var messageObject = utils.DeserializeDataFromString(message)
 			data, rid, cid, eventname, error, err := parser.GetMessageDetails(messageObject)
