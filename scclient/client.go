@@ -14,9 +14,9 @@ import (
 )
 
 type Client struct {
+	counter             utils.AtomicCounter
 	authToken           *string
 	url                 string
-	counter             utils.AtomicCounter
 	socket              gowebsocket.Socket
 	onConnect           func(client Client)
 	onConnectError      func(client Client, err error)
