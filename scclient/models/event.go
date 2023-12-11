@@ -1,5 +1,10 @@
 package models
 
+type TransmitEvent struct {
+	Event string      `json:"event"`
+	Data  interface{} `json:"data"`
+}
+
 type EmitEvent struct {
 	Event string      `json:"event"`
 	Data  interface{} `json:"data"`
@@ -15,6 +20,13 @@ type ReceiveEvent struct {
 type Channel struct {
 	Channel string      `json:"channel"`
 	Data    interface{} `json:"data,omitempty"`
+}
+
+func GetTransmitEventObject(eventname string, data interface{}) TransmitEvent {
+	return TransmitEvent{
+		Event: eventname,
+		Data:  data,
+	}
 }
 
 func GetEmitEventObject(eventname string, data interface{}, messageId int) EmitEvent {
