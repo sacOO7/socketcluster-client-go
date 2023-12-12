@@ -14,9 +14,9 @@ import (
 )
 
 type Client struct {
+	counter             utils.AtomicCounter
 	authToken           *string
 	url                 string
-	counter             utils.AtomicCounter
 	socket              gowebsocket.Socket
 	onConnect           func(client Client)
 	onConnectError      func(client Client, err error)
@@ -88,6 +88,8 @@ func (client *Client) registerCallbacks() {
 
 		if message == "" {
 			client.socket.SendText("")
+		} else if message == "#1" { //protocol v1 ping
+			client.socket.SendText("#2")			
 		} else {
 			var messageObject = utils.DeserializeDataFromString(message)
 			data, rid, cid, eventname, error, err := parser.GetMessageDetails(messageObject)
